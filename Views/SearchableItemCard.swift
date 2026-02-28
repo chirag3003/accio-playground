@@ -1,11 +1,19 @@
 import SwiftUI
+import UIKit
 
-/// Spring-scale press effect applied via ButtonStyle so it never blocks NavigationLink
+/// Spring-scale press effect with light haptic feedback
 struct SpringPressButtonStyle: ButtonStyle {
+    private let haptic = UIImpactFeedbackGenerator(style: .light)
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.65), value: configuration.isPressed)
+            .onChange(of: configuration.isPressed) { pressed in
+                if pressed {
+                    haptic.impactOccurred()
+                }
+            }
     }
 }
 

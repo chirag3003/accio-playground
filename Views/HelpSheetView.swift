@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct HelpSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -25,6 +27,15 @@ struct HelpSheetView: View {
             .background(AppTheme.backgroundGradient)
             .navigationTitle("Help")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(AppTheme.accent)
+                }
+            }
         }
     }
 }

@@ -58,6 +58,19 @@ struct OnboardingView: View {
                 .padding(.bottom, 12)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if selection < pages.count - 1 {
+                Button("Skip") {
+                    onFinish()
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(AppTheme.textSecondary)
+                .padding(.trailing, 20)
+                .padding(.top, 16)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: selection)
     }
 
     private func advance() {

@@ -10,6 +10,8 @@ struct ViewfinderView: View {
     @State private var pulseScale: CGFloat = 1.0
     @State private var pulseOpacity: Double = 1.0
     @State private var showIdleHint = false
+    @State private var showFoundFlash = false
+    @State private var idleHintWorkItem: DispatchWorkItem?
 
     var body: some View {
         ZStack {
@@ -32,10 +34,33 @@ struct ViewfinderView: View {
         .onAppear {
             viewModel.startScanning(for: targetItem)
             startPulseAnimation()
-            startIdleHintTimer()
+            scheduleIdleHint(delay: 4.0)
         }
         .onDisappear {
             viewModel.stopScanning()
+            idleHintWorkItem?.cancel()
+        }
+        .onChange(of: viewModel.hasMatch) { hasMatch in
+            if hasMatch {
+                // Hide idle hint when found
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    showIdleHint = false
+                }
+                idleHintWorkItem?.cancel()
+
+                // Trigger found flash
+                withAnimation(.easeIn(duration: 0.15)) {
+                    showFoundFlash = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    withAnimation(.easeOut(duration: 0.45)) {
+                        showFoundFlash = false
+                    }
+                }
+            } else {
+                // Match lost — re-show idle hint after a shorter delay
+                scheduleIdleHint(delay: 2.0)
+            }
         }
     }
 
@@ -58,6 +83,15 @@ struct ViewfinderView: View {
                 topHUD
                 Spacer()
                 bottomHUD
+            }
+
+            // Layer 4: Green border flash on first match
+            if showFoundFlash {
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(AppTheme.accent, lineWidth: 4)
+                    .shadow(color: AppTheme.accent.opacity(0.6), radius: 16)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
         }
     }
@@ -118,7 +152,7 @@ struct ViewfinderView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
                     .background(AppTheme.surface.opacity(0.8), in: Capsule())
-                    .transition(.opacity)
+                    .transition(.scale.combined(with: .opacity))
             } else if showIdleHint {
                 Text("No match yet \u{2014} try moving closer or adding more light.")
                     .font(.footnote.weight(.semibold))
@@ -140,16 +174,22 @@ struct ViewfinderView: View {
                     .shadow(color: .red.opacity(0.4), radius: 10, y: 4)
             }
         }
-        .padding(.bottom, 52)
+        .animation(.easeInOut(duration: 0.3), value: viewModel.hasMatch)
+        .animation(.easeInOut(duration: 0.3), value: showIdleHint)
+        .padding(.bottom, 20)
     }
 
-    private func startIdleHintTimer() {
-        showIdleHint = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+    private func scheduleIdleHint(delay: TimeInterval) {
+        idleHintWorkItem?.cancel()
+        let work = DispatchWorkItem { [self] in
             if !viewModel.hasMatch {
-                showIdleHint = true
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showIdleHint = true
+                }
             }
         }
+        idleHintWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
     // MARK: - Permission Denied (custom fallback for iOS 16 compat)

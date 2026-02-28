@@ -54,7 +54,7 @@ private struct DetectionHighlight: View {
         TimelineView(.animation(minimumInterval: 0.05)) { timeline in
             let phase = pulseFraction(date: timeline.date)
 
-            ZStack {
+            ZStack(alignment: .topLeading) {
                 // Subtle translucent fill
                 RoundedRectangle(cornerRadius: 6)
                     .fill(accent.opacity(0.08))
@@ -68,16 +68,11 @@ private struct DetectionHighlight: View {
                 TargetingBrackets()
                     .stroke(accent, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
 
-                // Confidence badge -- pinned inside the top-left
-                VStack(spacing: 0) {
-                    HStack {
-                        confidenceBadge
-                            .padding(.leading, 4)
-                            .padding(.top, 4)
-                        Spacer()
-                    }
-                    Spacer()
-                }
+                // Label badge -- anchored above the top-left corner so it never
+                // wraps or gets clipped by narrow bounding boxes
+                confidenceBadge
+                    .fixedSize()
+                    .offset(x: 0, y: -26)
             }
         }
         .frame(width: screenRect.width, height: screenRect.height)
@@ -98,6 +93,7 @@ private struct DetectionHighlight: View {
             Text(detection.label)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 .foregroundStyle(.white)
+                .lineLimit(1)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
