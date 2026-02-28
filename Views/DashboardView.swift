@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// The home screen displaying a grid of searchable items
 struct DashboardView: View {
@@ -49,6 +50,14 @@ struct DashboardView: View {
         }
         .background(AppTheme.backgroundGradient)
         .navigationTitle("Accio")
+        .onAppear {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithTransparentBackground()
+            appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+            UINavigationBar.appearance().standardAppearance = appearance
+            UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
